@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FastAPI Doc Gen</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>FastAPI Doc Gen</h1>
+      <p class="subtitle">Capture APIs → Generate OpenAPI specs</p>
+    </header>
+
+    <div id="status" class="status hidden">
+      <span class="status-text">Ready</span>
+    </div>
+
+    <div class="actions">
+      <button id="scan-btn" class="btn-primary">🔍 Scan Page for APIs</button>
+      <button id="capture-btn" class="btn-secondary" disabled>📋 Capture Endpoints</button>
+      <button id="generate-btn" class="btn-success" disabled>⚡ Generate OpenAPI</button>
+    </div>
+
+    <div id="endpoints-section" class="section hidden">
+      <h2>Captured Endpoints</h2>
+      <div id="endpoints-list" class="endpoints-list"></div>
+      <div class="endpoints-empty" id="endpoints-empty">No endpoints captured yet. Click "Scan Page for APIs" first.</div>
+    </div>
+
+    <div id="output-section" class="section hidden">
+      <h2>Generated Spec</h2>
+      <div class="output-controls">
+        <button id="copy-btn" class="btn-small">📋 Copy</button>
+        <button id="download-btn" class="btn-small">💾 Download</button>
+        <button id="clear-btn" class="btn-small btn-outline">🗑️ Clear</button>
+      </div>
+      <pre id="output" class="output"></pre>
+    </div>
+
+    <footer>
+      <p class="version">v1.0.0 · One-time purchase</p>
+      <p class="powered">Powered by ExtensionPay</p>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
