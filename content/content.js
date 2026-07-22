@@ -32,10 +32,17 @@
     window.__fastapiDocGenEndpoints.push({ method, path: url, source });
   }
 
-  // 1. Intercept fetch
+  // 1. Intercept fetch — BUG FIX #4: Handle Request objects, not just strings
   const originalFetch = window.fetch;
   window.fetch = function(...args) {
-    const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
+    let url;
+    if (typeof args[0] === 'string') {
+      url = args[0];
+    } else if (args[0] instanceof Request) {
+      url = args[0].url;
+    } else if (args[0] && typeof args[0] === 'object' && args[0].url) {
+      url = args[0].url;
+    }
     const method = (args[1]?.method || 'GET').toUpperCase();
     addEndpoint(method, url, 'fetch');
     return originalFetch.apply(this, args);
@@ -74,11 +81,10 @@
       }
     });
 
-    // Axios instance detection (if present)
+    // Axios instance detection
     if (window.axios) {
-      const originalAxios = window.axios;
-      if (originalAxios.defaults && originalAxios.defaults.baseURL) {
-        addEndpoint('GET', originalAxios.defaults.baseURL, 'axios');
+      if (window.axios.defaults && window.axios.defaults.baseURL) {
+        addEndpoint('GET', window.axios.defaults.baseURL, 'axios');
       }
     }
   }

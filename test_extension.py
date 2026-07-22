@@ -3,6 +3,13 @@
 Test harness for FastAPI Doc Gen Chrome extension.
 Verifies the extension structure, manifest, and core logic.
 
+Includes regression tests for bugs found in non-routine use cases:
+- BUG #1: scanPageForAPIs returns empty (async capture timing)
+- BUG #2: buildOpenAPISpec fails on cross-origin URLs
+- BUG #3: copyOutput fails when clipboard API unavailable
+- BUG #4: fetch interception doesn't handle Request objects
+- BUG #5: stale endpoints persist after clear/load
+
 Run:  python3 test_extension.py
 """
 import json, os, sys
@@ -112,7 +119,6 @@ def test_core_logic():
         ("https://example.com/contact", False),
     ]
     
-    # Simulate the looksLikeAPI function
     def looksLikeAPI(url):
         try:
             from urllib.parse import urlparse
@@ -164,9 +170,147 @@ def test_openapi_generation():
     print("✓ OpenAPI generation produces valid spec structure")
     return True
 
+# --- Regression tests for bugs found in non-routine use cases ---
+
+def test_bug1_async_capture_timing():
+    """
+    BUG #1: scanPageForAPIs returns immediately, but the content script
+    sets window.__fastapiDocGenEndpoints after a 2-second timeout.
+    The popup's executeScript call runs scanPageForAPIs which returns
+    endpoints synchronously, but the 2-second timeout means the returned
+    array is empty at first.
+    
+    FIX: The popup now waits 2.5s after injecting the content script
+    before reading the results, and reads from window.__fastapiDocGenEndpoints
+    in a separate executeScript call.
+    """
+    # Verify the popup.js has the wait logic
+    path = os.path.join(HERE, "popup/popup.js")
+    with open(path) as f:
+        js = f.read()
+    
+    # Check that the 2.5s wait is present
+    assert "setTimeout(resolve, 2500)" in js, \
+        "BUG #1 not fixed: missing 2.5s wait for async capture"
+    
+    # Check that we read from window.__fastapiDocGenEndpoints in a separate call
+    assert "window.__fastapiDocGenEndpoints || []" in js, \
+        "BUG #1 not fixed: not reading from window.__fastapiDocGenEndpoints"
+    
+    print("✓ BUG #1 fixed: async capture timing — popup waits 2.5s before reading results")
+    return True
+
+def test_bug2_cross_origin_paths():
+    """
+    BUG #2: buildOpenAPISpec uses window.location.origin which may not
+    match the captured endpoint's origin (e.g., API on a different subdomain).
+    The cleanPath replacement fails for cross-origin URLs.
+    
+    FIX: The buildOpenAPISpec now uses URL parsing to extract the path,
+    and collects all unique origins for the servers array.
+    """
+    path = os.path.join(HERE, "popup/popup.js")
+    with open(path) as f:
+        js = f.read()
+    
+    # Check that we use URL parsing instead of string replacement
+    assert "new URL(ep.path" in js, \
+        "BUG #2 not fixed: not using URL parsing for path extraction"
+    
+    # Check that we collect multiple origins
+    assert "origins" in js and "new Set" in js, \
+        "BUG #2 not fixed: not collecting unique origins for servers"
+    
+    # Check that we handle cross-origin URLs
+    assert "url.pathname + url.search + url.hash" in js, \
+        "BUG #2 not fixed: not properly extracting path with query params"
+    
+    print("✓ BUG #2 fixed: cross-origin paths — uses URL parsing, collects all origins")
+    return True
+
+def test_bug3_clipboard_fallback():
+    """
+    BUG #3: copyOutput doesn't handle the case where navigator.clipboard
+    is unavailable (HTTPS-only API). On HTTP pages, the clipboard API
+    throws an error.
+    
+    FIX: Added fallbackCopy function that uses execCommand('copy')
+    when the clipboard API is unavailable.
+    """
+    path = os.path.join(HERE, "popup/popup.js")
+    with open(path) as f:
+        js = f.read()
+    
+    # Check that we check for secure context
+    assert "isSecureContext" in js, \
+        "BUG #3 not fixed: not checking for secure context"
+    
+    # Check that we have a fallback function
+    assert "fallbackCopy" in js, \
+        "BUG #3 not fixed: no fallback copy function"
+    
+    # Check that we use execCommand as fallback
+    assert "execCommand('copy')" in js, \
+        "BUG #3 not fixed: no execCommand fallback"
+    
+    print("✓ BUG #3 fixed: clipboard fallback — handles HTTP pages with execCommand")
+    return True
+
+def test_bug4_request_object_handling():
+    """
+    BUG #4: The content script intercepts fetch but doesn't handle
+    Request objects passed as the first argument (only string URLs).
+    fetch(new Request('https://api.example.com/v1/users')) would fail
+    to capture the URL.
+    
+    FIX: Added handling for Request objects and object URLs.
+    """
+    path = os.path.join(HERE, "content/content.js")
+    with open(path) as f:
+        js = f.read()
+    
+    # Check that we handle Request objects
+    assert "args[0] instanceof Request" in js, \
+        "BUG #4 not fixed: not handling Request objects in fetch interception"
+    
+    # Check that we handle object URLs
+    assert "args[0].url" in js, \
+        "BUG #4 not fixed: not handling object URLs in fetch interception"
+    
+    print("✓ BUG #4 fixed: Request object handling — intercepts Request objects and object URLs")
+    return True
+
+def test_bug5_stale_endpoints():
+    """
+    BUG #5: loadEndpoints doesn't clear old endpoints from the endpoints
+    list before loading new ones — stale endpoints from a previous scan
+    persist. Also, clearOutput doesn't clear chrome.storage.
+    
+    FIX: Added state.endpoints = [] before loading, and chrome.storage.local.remove
+    in clearOutput.
+    """
+    path = os.path.join(HERE, "popup/popup.js")
+    with open(path) as f:
+        js = f.read()
+    
+    # Check that we clear state before loading
+    assert "state.endpoints = []" in js, \
+        "BUG #5 not fixed: not clearing state before loading"
+    
+    # Check that clearOutput removes from storage
+    assert "chrome.storage.local.remove" in js, \
+        "BUG #5 not fixed: clearOutput doesn't remove from storage"
+    
+    # Check that renderEndpoints escapes HTML (bonus XSS fix)
+    assert "replace(/&/g" in js, \
+        "XSS fix not present: not escaping HTML in endpoint paths"
+    
+    print("✓ BUG #5 fixed: stale endpoints — clears state before load, removes from storage on clear")
+    return True
+
 def main():
     print("=" * 60)
-    print("FastAPI Doc Gen — Extension Test Suite")
+    print("FastAPI Doc Gen — Extension Test Suite (with regression tests)")
     print("=" * 60)
     
     tests = [
@@ -176,6 +320,11 @@ def main():
         ("JS syntax", test_js_syntax),
         ("Core logic", test_core_logic),
         ("OpenAPI generation", test_openapi_generation),
+        ("BUG #1: async capture timing", test_bug1_async_capture_timing),
+        ("BUG #2: cross-origin paths", test_bug2_cross_origin_paths),
+        ("BUG #3: clipboard fallback", test_bug3_clipboard_fallback),
+        ("BUG #4: Request object handling", test_bug4_request_object_handling),
+        ("BUG #5: stale endpoints", test_bug5_stale_endpoints),
     ]
     
     passed = 0
