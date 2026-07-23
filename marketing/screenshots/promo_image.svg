@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="280" viewBox="0 0 440 280">
+  <rect width="440" height="280" rx="12" fill="#0f1117"/>
+  <!-- Gradient overlay -->
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1d24"/>
+      <stop offset="100%" stop-color="#0f1117"/>
+    </linearGradient>
+  </defs>
+  <rect width="440" height="280" rx="12" fill="url(#grad)"/>
+  <!-- Icon -->
+  <rect x="160" y="40" width="120" height="120" rx="24" fill="#1a1d24" stroke="#3b82f6" stroke-width="2"/>
+  <rect x="200" y="60" width="40" height="80" rx="4" fill="#0f1117"/>
+  <line x1="200" y1="76" x2="240" y2="76" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+  <line x1="200" y1="92" x2="232" y2="92" stroke="#8b8f96" stroke-width="2" stroke-linecap="round"/>
+  <line x1="200" y1="108" x2="240" y2="108" stroke="#8b8f96" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="252" cy="80" r="8" fill="#22c55e"/>
+  <text x="252" y="84" font-family="monospace" font-size="8" fill="white" text-anchor="middle" font-weight="bold">API</text>
+  <!-- Title -->
+  <text x="220" y="180" font-family="monospace" font-size="18" fill="#ffffff" text-anchor="middle" font-weight="600">FastAPI Doc Gen</text>
+  <text x="220" y="200" font-family="monospace" font-size="12" fill="#8b8f96" text-anchor="middle">Generate OpenAPI specs from any web app</text>
+  <!-- Price -->
+  <rect x="140" y="216" width="160" height="32" rx="16" fill="#22c55e"/>
+  <text x="220" y="236" font-family="monospace" font-size="14" fill="#0f1117" text-anchor="middle" font-weight="600">$29 one-time</text>
+  <!-- Features -->
+  <text x="220" y="260" font-family="monospace" font-size="10" fill="#8b8f96" text-anchor="middle">No subscription · No server · Lifetime updates</text>
+</svg>
