@@ -24,9 +24,6 @@
     "storage",
     "clipboardWrite"
   ],
-  "host_permissions": [
-    "activeTab"
-  ],
   "background": {
     "service_worker": "background/background.js"
   },
