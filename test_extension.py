@@ -29,7 +29,9 @@ def test_manifest():
     assert "version" in manifest, "Missing version"
     assert "action" in manifest, "Missing action"
     assert "permissions" in manifest, "Missing permissions"
-    assert "content_scripts" in manifest, "Missing content_scripts"
+    # activeTab + scripting replaces declarative content_scripts (Chrome Web Store requirement)
+    assert "activeTab" in manifest["permissions"], "Missing activeTab permission"
+    assert "scripting" in manifest["permissions"], "Missing scripting permission"
     assert "background" in manifest, "Missing background"
     assert "icons" in manifest, "Missing icons"
     

@@ -25,15 +25,7 @@
     "clipboardWrite"
   ],
   "host_permissions": [
-    "<all_urls>"
-  ],
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content/content.js"],
-      "css": ["content/content.css"],
-      "run_at": "document_idle"
-    }
+    "activeTab"
   ],
   "background": {
     "service_worker": "background/background.js"
