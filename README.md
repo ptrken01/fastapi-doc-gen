@@ -56,12 +56,28 @@ cd fastapi-doc-gen
 - Includes all future updates
 - 30-day money-back guarantee
 
-## Monetization
+## Monetization — CRITICAL SETUP (required for the paywall to work)
 
-Uses [ExtensionPay](https://extensionpay.com) for:
-- One-time purchase processing
-- License verification
-- No server infrastructure needed
+The extension uses [ExtensionPay](https://extensionpay.com) for payment. **You MUST complete these steps or the extension stays free:**
+
+1. Create an ExtensionPay account at [extensionpay.com](https://extensionpay.com)
+2. Create a **new extension** in your ExtensionPay dashboard — note the **extension ID** you choose (default is `fastapi-doc-gen`, matching `popup/config.js`)
+3. Set the price to **$29 one-time**
+4. The extension is now paywalled: `generateOpenAPI()` is locked until the user purchases
+5. Update `popup/config.js` if your ExtensionPay ID differs from `fastapi-doc-gen`
+
+**How the paywall works:**
+- On popup open, `checkPurchase()` calls `ExtensionPay.getUser()` to verify payment
+- If not purchased: Scan + Capture are free (preview), but **Generate OpenAPI is locked**
+- Clicking "Generate" while locked opens the ExtensionPay purchase page
+- After purchase, ExtensionPay sets a cookie and `state.isPurchased` becomes true
+
+## How to Publish
+
+1. Create an ExtensionPay account at [extensionpay.com](https://extensionpay.com)
+2. Create a new extension with ID `fastapi-doc-gen` and set price to $29 one-time
+3. Zip the folder and upload to Chrome Web Store
+4. (Chrome Web Store itself shows "Free" — ExtensionPay handles the actual charge inside the extension)
 
 ## Tech Stack
 
