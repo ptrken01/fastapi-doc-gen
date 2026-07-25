@@ -24,7 +24,6 @@ The extension uses the following Chrome permissions, all of which operate locall
 - **clipboardWrite**: Copies generated OpenAPI specs to your clipboard (only when you click "Copy")
 - **scripting**: Executes the scanning script in the active tab
 - **storage**: Saves captured endpoints locally in your browser (never leaves your device)
-- **host permissions (<all_urls>)**: Intercepts fetch/XHR calls to capture API endpoints
 
 None of these permissions transmit data to any external server.
 
@@ -37,11 +36,7 @@ All data (captured endpoints, generated specs) is stored locally in your browser
 
 ## Third-Party Services
 
-The extension does not use any third-party analytics, advertising, or tracking services.
-
-## ExtensionPay
-
-Payment processing is handled by ExtensionPay (https://extensionpay.com). ExtensionPay only collects data necessary for payment processing (your email and payment information). This data is governed by ExtensionPay's privacy policy, not this one.
+The extension uses ExtensionPay (https://extensionpay.com) to process one-time payments and verify purchase status. To do this, the extension loads ExtensionPay's script (`https://extensionpay.com/extended.js`) in the popup and reads a purchase cookie set by ExtensionPay after a successful payment. This is the only externally-hosted code the extension executes, and it is required for the paywall to function. ExtensionPay only collects data necessary for payment processing (your email and payment information). This data is governed by ExtensionPay's privacy policy, not this one.
 
 ## Changes to This Privacy Policy
 
