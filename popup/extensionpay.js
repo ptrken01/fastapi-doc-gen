@@ -1,75 +1,72 @@
 // FastAPI Doc Gen — ExtensionPay integration
-// This file should be loaded in the popup via a <script> tag
-// Get your extension ID from https://extensionpay.com/dashboard
+// Loaded as a web_accessible_resource so it can load the ExtensionPay remote script.
+(function () {
+  'use strict';
 
-(function() {
-  // ExtensionPay configuration
-  // Replace 'fastapi-doc-gen' with your actual ExtensionPay extension ID
-  const EXTENSIONPAY_ID = 'fastapi-doc-gen';
-
-  // Check if ExtensionPay is available
-  function isExtensionPayAvailable() {
-    return typeof ExtensionPay !== 'undefined' && typeof ExtensionPay.open !== 'undefined';
-  }
-
-  // Initialize ExtensionPay
-  function initExtensionPay() {
-    if (typeof ExtensionPay === 'undefined') {
-      // Load ExtensionPay script
-      const script = document.createElement('script');
-      script.src = 'https://extensionpay.com/extended.js';
-      script.onload = function() {
-        ExtensionPay.init(EXTENSIONPAY_ID, {
-          onEvent: function(event) {
-            if (event === 'purchased' || event === 'installed') {
-              chrome.storage.local.set({ purchaseStatus: 'purchased' });
-              // Reload popup to reflect purchase
-              location.reload();
-            }
-          }
-        });
-      };
-      document.head.appendChild(script);
-    } else {
-      ExtensionPay.init(EXTENSIONPAY_ID);
-    }
-  }
-
-  // Check purchase status
-  async function checkPurchase() {
-    return new Promise((resolve) => {
-      chrome.storage.local.get(['purchaseStatus'], (result) => {
-        if (result.purchaseStatus === 'purchased') {
-          resolve(true);
-        } else {
-          // Ask background script to check with ExtensionPay
-          chrome.runtime.sendMessage({ action: 'checkPurchase' }, (response) => {
-            resolve(response?.status === 'purchased');
-          });
-        }
-      });
+  // Load ExtensionPay extended.js in the MAIN world so ExtensionPay can read/set
+  // the purchase cookie. We append it to document.body.
+  function loadExtensionPayScript() {
+    return new Promise((resolve, reject) => {
+      if (typeof window.ExtensionPay !== 'undefined') {
+        resolve(window.ExtensionPay);
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = 'https://extensionpay.com/extended.js';
+      s.async = true;
+      s.onload = () => resolve(window.ExtensionPay);
+      s.onerror = () => reject(new Error('Failed to load ExtensionPay script'));
+      document.body.appendChild(s);
     });
   }
 
-  // Open purchase page
+  async function initExtensionPay() {
+    const EP = await loadExtensionPayScript();
+    EP.init(window.FastAPIDocGenConfig.EXTENSIONPAY_ID, {
+      onEvent: function (event) {
+        if (event === 'purchased' || event === 'installed') {
+          chrome.storage.local.set({ purchaseStatus: 'purchased' });
+          // Reload popup to reflect purchase
+          if (window.location.protocol.startsWith('chrome-extension')) {
+            location.reload();
+          }
+        }
+      }
+    });
+    return EP;
+  }
+
+  // Check purchase status via ExtensionPay
+  async function checkPurchase() {
+    try {
+      const local = await chrome.storage.local.get(['purchaseStatus']);
+      if (local.purchaseStatus === 'purchased') return true;
+    } catch (e) { /* ignore */ }
+
+    try {
+      const EP = await initExtensionPay();
+      const user = await EP.getUser();
+      if (user && (user.paid || user.installed)) {
+        await chrome.storage.local.set({ purchaseStatus: 'purchased' });
+        return true;
+      }
+    } catch (e) {
+      // Network or script error — fall through to not-purchased
+    }
+    return false;
+  }
+
   function openPurchasePage() {
-    if (isExtensionPayAvailable()) {
-      ExtensionPay.open();
+    if (typeof window.ExtensionPay !== 'undefined') {
+      window.ExtensionPay.open();
     } else {
-      // Fallback: open ExtensionPay website
-      window.open('https://extensionpay.com/manage/fastapi-doc-gen', '_blank');
+      window.open('https://extensionpay.com/manage/' + window.FastAPIDocGenConfig.EXTENSIONPAY_ID, '_blank');
     }
   }
 
-  // Export for use in popup
   window.FastAPIDocGenPay = {
     init: initExtensionPay,
     checkPurchase: checkPurchase,
     openPurchase: openPurchasePage
   };
-
-  // Auto-initialize if ExtensionPay is available
-  if (typeof ExtensionPay !== 'undefined') {
-    initExtensionPay();
-  }
 })();

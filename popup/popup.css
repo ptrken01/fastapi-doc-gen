@@ -209,3 +209,27 @@ footer {
 .hidden {
   display: none;
 }
+
+/* Upgrade banner */
+.upgrade-banner {
+  background: #1a1d24;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 8px 0;
+  text-align: center;
+}
+.upgrade-banner p { font-size: 11px; margin: 0 0 8px; color: #cbd5e1; }
+.upgrade-fine { font-size: 9px; color: #8b8f96; margin-top: 6px; }
+.btn-upgrade {
+  width: 100%;
+  background: #3b82f6;
+  color: #0f1117;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-upgrade:hover { background: #2563eb; }

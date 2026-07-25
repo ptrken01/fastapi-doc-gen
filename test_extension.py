@@ -303,11 +303,51 @@ def test_bug5_stale_endpoints():
     assert "chrome.storage.local.remove" in js, \
         "BUG #5 not fixed: clearOutput doesn't remove from storage"
     
-    # Check that renderEndpoints escapes HTML (bonus XSS fix)
-    assert "replace(/&/g" in js, \
-        "XSS fix not present: not escaping HTML in endpoint paths"
+    # Check that renderEndpoints uses textContent (XSS-safe by construction)
+    assert "textContent" in js, \
+        "XSS fix not present: renderEndpoints should use textContent for endpoint paths"
     
     print("✓ BUG #5 fixed: stale endpoints — clears state before load, removes from storage on clear")
+    return True
+
+def test_paywall_gate():
+    """
+    PAYWALL: The extension must NOT be free. generateOpenAPI() must be
+    gated behind a real purchase check. Without this, the product earns $0.
+
+    FIX: popup.js loads config.js + extensionpay.js, checkPurchase() blocks
+    until ExtensionPay confirms payment, and generateOpenAPI() returns early
+    (opens purchase page) if state.isPurchased is false.
+    """
+    popup = os.path.join(HERE, "popup/popup.js")
+    with open(popup) as f:
+        js = f.read()
+
+    # 1. popup.js must load ExtensionPay integration
+    assert "FastAPIDocGenPay.checkPurchase" in js, \
+        "Paywall missing: popup.js does not call checkPurchase()"
+
+    # 2. generateOpenAPI must return early when not purchased
+    assert "if (!state.isPurchased)" in js, \
+        "Paywall missing: generateOpenAPI does not check state.isPurchased"
+
+    # 3. On locked generate, it must open the purchase page (not produce output)
+    assert "FastAPIDocGenPay.openPurchase()" in js, \
+        "Paywall missing: locked generate does not open purchase page"
+
+    # 4. config.js must define the ExtensionPay ID
+    cfg = os.path.join(HERE, "popup/config.js")
+    with open(cfg) as f:
+        cfg_js = f.read()
+    assert "EXTENSIONPAY_ID" in cfg_js, "Paywall missing: config.js has no EXTENSIONPAY_ID"
+
+    # 5. extensionpay.js must actually call ExtensionPay APIs (not a stub)
+    ep = os.path.join(HERE, "popup/extensionpay.js")
+    with open(ep) as f:
+        ep_js = f.read()
+    assert "EP.getUser()" in ep_js, "Paywall missing: extensionpay.js does not verify via ExtensionPay.getUser()"
+
+    print("✓ PAYWALL: generateOpenAPI gated behind real ExtensionPay purchase check")
     return True
 
 def main():
@@ -327,6 +367,7 @@ def main():
         ("BUG #3: clipboard fallback", test_bug3_clipboard_fallback),
         ("BUG #4: Request object handling", test_bug4_request_object_handling),
         ("BUG #5: stale endpoints", test_bug5_stale_endpoints),
+        ("PAYWALL: real purchase gate", test_paywall_gate),
     ]
     
     passed = 0
