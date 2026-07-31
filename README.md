@@ -117,3 +117,8 @@ fastapi-doc-gen/
 ## License
 
 MIT — but the extension itself is a paid product. The source is available for learning purposes.
+
+
+## Live site
+
+All products + free articles: **[autoincomesys.com](https://autoincomesys.com)** — local-first AI dev notes, build-once digital products (Gumroad).
