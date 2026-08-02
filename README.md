@@ -122,3 +122,7 @@ MIT — but the extension itself is a paid product. The source is available for 
 ## Live site
 
 All products + free articles: **[autoincomesys.com](https://autoincomesys.com)** — local-first AI dev notes, build-once digital products (Gumroad).
+## Related
+- [Local-First AI Dev Notes (SEO site)](https://autoincomesys.com)
+- [web-browser-mcp](https://github.com/ptrken01/web-browser-mcp)
+- [fastapi-doc-gen](https://github.com/ptrken01/fastapi-doc-gen)
